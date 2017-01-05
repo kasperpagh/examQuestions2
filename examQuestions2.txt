@@ -1,0 +1,160 @@
+Why would you consider a Scripting Language as JavaScript as your Backend Platform)
+
+    For mig ville den primære grund være, at udviklingshastigheden er meget høj. Dette skyldes at JS er et meget
+    høj niveau sprog, hvorfor mange elementer er abstraheret bort. Derfor kræver det simpelthen ikke meget kode.
+
+    Det kan også nævnes at du med node, kan skrive både backend og frontend i samme sprog, hvilket giver fleksibilitet
+    og mulighed for at allokere ressourcer blandt teams, da alle skriveri det samme.
+
+Explain Pros & Cons in using Node.js + Express to implement your Backend compared to a strategy using for
+example Java/JAX-RS/Tomcat)
+
+    Pros:   Høj udviklingshastihed.
+            Meget nemt for frontend at skrive backend og vice versa
+            Lav barrier to entry
+
+    cons:   Lavere performance da JS er langt mere abstrakt end C#, Java, c++ osv.
+
+
+Node.js uses a Single Threaded Non-blocking strategy to handle asynchronous task. Explain strategies to
+implement a Node.js based server architecture that still could take advantage of a multi-core Server)
+
+    Det bedste bud her er cluster. Brugen deraf kan ses i bin/www.
+    Hvor der startes en master thread, samt en worker per CPU kerne.
+
+
+Explain, using relevant examples, concepts related to the testing a REST-API using Node/JavaScript +
+relevant packages)
+
+    For relevante eksempler, se da test/server.js. Her findes test til de to API kald, der er implmenteret.
+    Hvis man bruger mocha, forløber testene på følgende vis:
+    describe (her skriver man hvad man vil teste med ord --> it (der kan være mange its i en descripe. det er de individuelle tests)
+    --> her kan man så bruge chai til sine expects.
+    Fuldt eksempel:
+        describe("RGB to Hex conversion", function ()
+        {
+            it("converts the basic colors", function ()
+            {
+                var redHex = converter.rgbToHex(255, 0, 0);
+                var greenHex = converter.rgbToHex(0, 255, 0);
+                var blueHex = converter.rgbToHex(0, 0, 255);
+
+                expect(redHex).to.equal("ff0000");
+                expect(greenHex).to.equal("00ff00");
+                expect(blueHex).to.equal("0000ff");
+            });
+        });
+
+Explain, using relevant examples, the Express concept; middleware.)
+
+    Middleware er enhver funktion der kaldes i den såkaldte "middleware chain", det vil sige fra et request rammer serveren, indtil et response sendes tilbage.
+    Alt middleware bruges ved at sige:
+    app.use(function (req, res, next)
+    {
+        //herinde kan man gøre ved req/res hvad man vil. Man kan give kontrollen videre til næste stykke middleware med et kald til next()
+    });
+
+    En middleware funktion tager altid req, res og next som argumenter. Kæden sluttes hvis man ikke kalder next (så sker der intet), eller hvis et res returneres.
+
+    Man kunne f.eks bruge middleware til at tjekke om request kom fra verified brugere på følgende vis:
+
+        app.use(function (req, res, next)
+        {
+            if(req.headers.accessToken === blabla)
+            {
+                next();
+            }
+            else
+            {
+                res.status(forbidden).end();
+            }
+        });
+
+Explain, using relevant examples, how to implement sessions, and the legal implications of doing this.)
+
+    Først jura: Hvis man bruger session cookies (hvilket alle gør), skal man i EU gøre brugeren opmærksom derpå.
+
+    I app.js er der et eksempel på session cookies med express-session npm pakken.
+
+Compare the express strategy toward (server side) templating with the one you used with Java on second
+semester.)
+
+    EJS er rimelig meget det samme som Java expression language.
+
+Explain, using a relevant examples, your strategy for implementing a REST-API with Node/Express and show
+how you can "test" all the four CRUD operations programmatically using for example the Request package.)
+
+    Der er flere muligheder, som regel vil man nok bruge sine routes til at sige:
+    route.post("url", function(req,res, next)
+    {
+        //stuff to do in case of post
+    }
+
+    Angående testing deraf kan man se et eksempel på en test af GET i serverTest, hvor jeg gør således:
+     request(url, function (error, response, body)
+
+    For de andre metoder, kan man gøre følgende med request pakken:
+
+request({
+        method: 'PUT',
+        preambleCRLF: true,
+        postambleCRLF: true,
+        uri: 'http://service.com/upload',
+        multipart: [
+            {
+                'content-type': 'application/json',
+                body: JSON.stringify({
+                    foo: 'bar',
+                    _attachments: {'message.txt': {follows: true, length: 18, 'content_type': 'text/plain'}}
+                })
+            },
+            {body: 'I am an attachment'},
+            {body: fs.createReadStream('image.png')}
+        ],
+    },
+    function (error, response, body)
+    {
+        if (error)
+        {
+            return console.error('upload failed:', error);
+        }
+        console.log('Upload successful!  Server responded with:', body);
+    })
+
+    alternativt kan man også skrive: request.post(blabla)
+
+
+Explain, using relevant examples, about testing JavaScript code, relevant packages (Mocha etc.) and how to
+test asynchronous code.)
+
+    Se ovenstående spørgsmål. Dog skal det nævnes at med mocha skal man huske at kalde done(), i forbindelse med async kode.
+    Dette gøres således:
+            it("returns the color in hex", function (done)
+            {
+                request(url, function (error, response, body)
+                {
+                    expect(body).to.equal("ffffff");
+                    done(); // done her så mocha ved den skal afvente et async kald, før den failer/passer
+                });
+            });
+
+Explain, using relevant examples, different ways to mock out databases, HTTP-request etc)
+
+    For at mocke DB ville jeg altid bare bruge et objekt/array i memory til at simulere dataen.
+    Til at mocke http kald kan man bruge nock. Her fra nocks dokumentation:
+
+       " var couchdb = nock('http://myapp.iriscouch.com')
+                        .get('/users/1')
+                        .reply(200, {
+                          _id: '123ABC',
+                          _rev: '946B7D1C',
+                          username: 'pgte',
+                          email: 'pedro.teixeira@gmail.com'
+                         });
+        This setup says that we will intercept every HTTP call to http://myapp.iriscouch.com.
+
+        It will intercept an HTTP GET request to '/users/1' and reply with a status 200, and the body will contain a user representation in JSON."
+
+    Den stopper altså http requests (der endnu ikke er implemeteret) og giver et mock svar i stedet for, så du kan lave test first.
+
+    Ovenstående repræsentere også en måde at mocke en database, da det returnere et objekt som man selv kan definere.
